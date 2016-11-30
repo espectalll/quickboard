@@ -1,0 +1,30 @@
+{
+  "name": "quickjiban",
+  "version": "0.0.1",
+  "description": "A simple, online, open, quick bulletin board",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/espectalll/quickboard.git"
+  },
+  "keywords": [
+    "quickboard",
+    "board",
+    "sharing",
+    "social"
+  ],
+  "author": "Francisco Gómez <espectalll@kydara.com>",
+  "license": "SEE LICENSE IN LICENSE",
+  "bugs": {
+    "url": "https://github.com/espectalll/quickboard/issues"
+  },
+  "homepage": "https://github.com/espectalll/quickboard#readme",
+  "dependencies": {
+    "body-parser": "^1.15.2",
+    "express": "^4.14.0",
+    "level": "^1.5.0"
+  }
+}
