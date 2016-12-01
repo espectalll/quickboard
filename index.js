@@ -32,14 +32,9 @@ db.get('lastId', (err, data) => {
 	}
 });
 
-/*
-	ONLY NON-WORKING PART OF THE CODE YET!
-	For some reason, the callback just won't execute.
-	Suggestions are welcome, thx in advance :3
-*/
 db.createReadStream().on('data', (data) => {
 	// console.log(data.key, data.key.match(/^msg\d+$/));
-    if (data.key.match(/^msg\d+$/)) {
+	if (data.key.match(/^msg\d+$/)) {
 		// TODO: set as reply if necessary
 		db.put('lastId', lastId + 1, () => {
 			lastId++;
@@ -51,6 +46,10 @@ app.get('/', (req, res) => {
 	res.send('Heya there, Jiban here! :3');
 });
 
+app.get('/lastId', (req, res) => {
+	res.send(lastId.toString());
+});
+
 app.get('/posts', (req, res) => {
 	const amount = req.query['amount'];
 	const fromId = req.query['fromId'];
@@ -60,32 +59,50 @@ app.get('/posts', (req, res) => {
 	};
 
 	if (fromId) {
-		var returnList = [];
+		var promiseList = [];
+		
 		for (var i = fromId; i <= Math.min(fromId + amount, lastId); i++) {
-			db.get('msg' + i, (err, data) => {
-				if (err) {
-					console.error(err);
-				} else {
-					returnList.push(data);
-				}
-			});
+			promiseList.push(new Promise(() => {
+					db.get('msg' + i, (err, data) => {
+						if (err) {
+							reject(err);
+						} else {
+							resolve(data);
+						};
+					})
+				})
+			);
 		};
-		res.setHeader('Content-Type', 'application/json');
-		return res.send(returnList);
+		return Promise.all(promiseList).then((values) => {
+			res.setHeader('Content-Type', 'application/json');
+			res.send(values);
+		}).catch((err) => {
+			console.error(err);
+			res.status(500).send();
+		});
 	} else {
-		var returnList = [];
-		for (var i = Math.max(1, lastId - amount); i <= lastId; i++) {
-			db.get('msg' + i, (err, data) => {
-				if (err) {
-					console.error(err);
-				} else {
-					returnList.push(data);
-				}
-			});
+		var promiseList = [];
+		const startFrom = Math.max(1, lastId - amount);
+		for (var i = startFrom; i <= Math.min(startFrom + amount, lastId); i++) {
+			promiseList.push(new Promise((resolve, reject) => {
+					db.get('msg' + i, (err, data) => {
+						if (err) {
+							reject(err);
+						} else {
+							resolve(data);
+						};
+					})
+				})
+			);
 		};
-		res.setHeader('Content-Type', 'application/json');
-		return res.send(returnList);
-	}
+		return Promise.all(promiseList).then((values) => {
+			res.setHeader('Content-Type', 'application/json');
+			res.send(values);
+		}).catch((err) => {
+			console.error(err);
+			res.status(500).send();
+		});
+	};
 });
 
 app.post('/post', (req, res) => {
@@ -110,8 +127,8 @@ app.post('/post', (req, res) => {
 		res.setHeader('Content-Type', 'application/json');
 		return res.status(405).send({'success': false});
 	};
-	
-	db.put('msg' + returnObj['id'], returnObj, (err, data) => {
+
+	db.put('msg' + returnObj['id'], returnObj, (err) => {
 		res.setHeader('Content-Type', 'application/json');
 		if (err) {
 			return res.status(405).send({'success': false});
