@@ -32,15 +32,6 @@ db.get('lastId', (err, data) => {
 	}
 });
 
-db.emit('put', (data) => {
-	console.log(data.key, data.key.match(/^msg\d+$/));
-	if (data.key.match(/^msg\d+$/)) {
-		db.put('lastId', lastId + 1, () => {
-			lastId++;
-		});
-	};
-});
-
 /*
 	ONLY NON-WORKING PART OF THE CODE YET!
 	For some reason, the callback just won't execute.
